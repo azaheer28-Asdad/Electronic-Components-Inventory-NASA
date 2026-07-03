@@ -3,15 +3,9 @@ import cv2
 import ollama
 import os
 
-
 def question ():
-    
     prompt = """look at this image and tell me what you see, give the the labels and what each thing is equal to..."""
-    
     print("sending to ollama...")
-
-
-
     responce = ollama.chat (
         model =  'llama3.2-vision',
         messages = [{
@@ -20,8 +14,7 @@ def question ():
             'images': ['label.jpg']
             }]
     )
-
-
+    return responce['message']['content']
 
 cap = cv2.VideoCapture(0)
 
@@ -37,16 +30,15 @@ while True:
     if key == ord(' '):
         cv2.imwrite("label.jpg", frame)
         cv2.imshow('captured snapshot',frame)
-
+        
+        if os.path.exists("label.jpg"):
+            ai_responce = question()
+            print("====================================responce")
+            print(ai_responce)
+            print("==========================================")
+        else:
+            print("NO IMAGE TAKEN BUDDY!")
 
 cap.release()
 cv2.destroyAllWindows()
-
-if os.path.exists("label.jpg"):
-    ai_responce = question()
-
-    print("====================================responce")
-    print(ai_responce)
-    print("==========================================")
-else:
-    print("NO IMAGE TAKEN BUDDY!")
+print("hey")

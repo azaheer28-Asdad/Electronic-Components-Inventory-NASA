@@ -119,6 +119,9 @@ while True:
         #part number:
         match = 'OUR'
         best_match_text = label_val(result_text, match, result)
+
+        part_number = best_match_text
+
         sorted_list.insert(0,best_match_text)
         #description:
         match = 'VALUE'
@@ -137,7 +140,7 @@ while True:
         match = 'QTY.'
         best_match_text = label_val(result_text, match, result)
         sorted_list.insert(5,best_match_text)
-        #box number!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!:
+        #box number:
         sorted_list.insert(6,box_number)
 
         print(sorted_list)

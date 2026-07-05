@@ -2,10 +2,17 @@ import numpy as np
 import cv2
 import os
 from paddleocr import PaddleOCR
+import pygame
+import time
+
+
+#=======================================================================================editable section: SIZE
+
+    
 
 
 
-def label_val(result_text, match, result):
+def label_val(result_text, result, match = None):
 
     for index, item in enumerate(result_text):
         if item == match:
@@ -68,9 +75,83 @@ def label_val(result_text, match, result):
                     shortest_distance = dist
                     best_match_text = cand_text
 
-    return best_match_text
+    if match is not None:
+        return best_match_text
+
+#------------------------------------------------------------------------------------list indexing (6 slots)
+    #label (all caps, pay attension!!) MAKE SURE THE VALS DONT REPEAT!!!!!!:
+
+    box_number = 1 #insert box number!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+    sorted_list = []
+
+    #part number:
+    match = 'OUR'
+    best_match_text = label_val(result_text, result, match)
+    sorted_list.insert(0,best_match_text)
+
+    part_number = best_match_text
+    #description:
+    match = 'VALUE'
+    best_match_text = label_val(result_text, result, match)
+    sorted_list.insert(1,best_match_text)
+    #size:
+    MIL_SIZE_MAP = {
+    "01": "0502",
+    "02": "0505",
+    "03": "1005",
+    "04": "1505",
+    "05": "2208",
+    "06": "0705",
+    "07": "1206",
+    "08": "2010",
+    "09": "2512",
+    "10": "1010",
+    "11": "0402",
+    "12": "0603",
+    "13": "0302"
+    }
+    size_code = part_number[7:9]
+    size = MIL_SIZE_MAP.get(size_code, "None")
+    sorted_list.insert(2, size)
+    #date Code:
+    match = 'CODE'
+    best_match_text = label_val(result_text, result, match)
+    sorted_list.insert(3,best_match_text)
+    #Lot Code:
+    match = 'LOT'
+    best_match_text = label_val(result_text, result, match)
+    sorted_list.insert(4,best_match_text)
+    #quantity:
+    match = 'QTY.'
+    best_match_text = label_val(result_text, result, match)
+    sorted_list.insert(5,best_match_text)
+    #box number:
+    sorted_list.insert(6,box_number)
+   
+#--------------------------------------------------------------------list indexing (6 slots)      
+    return sorted_list
 
 
+
+
+pygame.init()
+pygame.mixer.init()
+def good():
+    good_sfx = pygame.mixer.Sound("good.mp3")
+    good_sfx.set_volume(0.1)
+    good_sfx.play()
+    time.sleep(1)
+
+def bad():
+    bad_sfx = pygame.mixer.Sound("bad.mp3")
+    bad_sfx.set_volume(1)
+    print("ERROR!!!!!")
+    bad_sfx.play()
+    time.sleep(0.4)
+    bad_sfx.play()
+    time.sleep(0.4)
+    bad_sfx.play()
+    time.sleep(1)
 
 
 cap = cv2.VideoCapture(0)
@@ -110,42 +191,8 @@ while True:
         else:
             print("NO IMAGE TAKEN BUDDY!")
 #---------------------------------------------------------------------------------------------------------run all processing code here (2 tab):
-#------------------------------------------------------------------------------------call labeling func
-        #label (all caps, pay attension!!) MAKE SURE THE VALS DONT REPEAT!!!!!!:
-
-        box_number = 1 #insert box number!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-        sorted_list = []
-
-        #part number:
-        match = 'OUR'
-        best_match_text = label_val(result_text, match, result)
-
-        part_number = best_match_text
-
-        sorted_list.insert(0,best_match_text)
-        #description:
-        match = 'VALUE'
-        best_match_text = label_val(result_text, match, result)
-        sorted_list.insert(1,best_match_text)
-        #size!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!:
-        #date Code:
-        match = 'CODE'
-        best_match_text = label_val(result_text, match, result)
-        sorted_list.insert(3,best_match_text)
-        #Lot Code:
-        match = 'LOT'
-        best_match_text = label_val(result_text, match, result)
-        sorted_list.insert(4,best_match_text)
-        #quantity:
-        match = 'QTY.'
-        best_match_text = label_val(result_text, match, result)
-        sorted_list.insert(5,best_match_text)
-        #box number:
-        sorted_list.insert(6,box_number)
-
+        sorted_list = label_val(result_text, result)
         print(sorted_list)
-#--------------------------------------------------------------------call labeling func        
-
 
 
 cap.release()
@@ -164,8 +211,5 @@ row.append(Box)
 
 print(row)
 #print(row[6])
-
-
-
 
 '''

@@ -66,9 +66,10 @@ def label_val(result_text, result, match = None):
             expected_y_top = (m_top * (cx0 - x1)) + y1
             expected_y_bottom = (m_bottom * (cx0 - x2)) + y2
 
-            buffer = 0
+            #buffer = 5
+            trapped_inside = (expected_y_top <= cy3) and (expected_y_bottom >= cy0)
 
-            if (expected_y_top <= (cy3 + buffer)) and (expected_y_bottom >= (cy0 - buffer)):
+            if (expected_y_top <= cy3 and expected_y_top >= cy0) or (expected_y_bottom >= cy0 and expected_y_bottom <= cy3) or trapped_inside:
                 
                 dist = cx0 - x1
                 if dist < shortest_distance:
@@ -138,7 +139,7 @@ pygame.init()
 pygame.mixer.init()
 def good():
     good_sfx = pygame.mixer.Sound("good.mp3")
-    good_sfx.set_volume(0.1)
+    good_sfx.set_volume(0.3)
     good_sfx.play()
     time.sleep(1)
 
@@ -157,9 +158,12 @@ def bad():
 cap = cv2.VideoCapture(0)
 
 #-----------------------------------------------------------OCR initialization
+#cap.set(cv2.CAP_PROP_FRAME_WIDTH, 600)
+#cap.set(cv2.CAP_PROP_FRAME_HEIGHT, 600)
+
 ocr = PaddleOCR(
     lang='en', 
-    use_textline_orientation=False, 
+    use_textline_orientation=True, 
     use_doc_orientation_classify=False,
     enable_mkldnn=False
 )
@@ -181,18 +185,43 @@ while True:
     if key == ord(' '):
         cv2.imwrite("label.jpg", frame)
         cv2.imshow('captured snapshot',frame)
+
+        time.sleep(0.08)
+
+        ret, frame1 = cap.read()
+        frame1 = cv2.cvtColor(frame1, cv2.COLOR_BGR2GRAY)
+        cv2.imwrite("label1.jpg", frame1)
+
+        print("images captured")
+
        
-        if os.path.exists("label.jpg"):
+        if os.path.exists("label.jpg") and os.path.exists("label1.jpg"):
 #------------------------------------------------------------------------------------------OCR Reading            
             result = ocr.predict("label.jpg")
             result_text = result[0]['rec_texts']
 
             print(result_text)
+
+            result1 = ocr.predict("label1.jpg")
+            result_text1 = result1[0]['rec_texts']
+
+            print(result_text1)
         else:
             print("NO IMAGE TAKEN BUDDY!")
 #---------------------------------------------------------------------------------------------------------run all processing code here (2 tab):
         sorted_list = label_val(result_text, result)
         print(sorted_list)
+
+        sorted_list1 = label_val(result_text1, result1)
+        print(sorted_list1)
+
+        if (None not in sorted_list) and (None not in sorted_list1) and ("None" not in sorted_list) and ("None" not in sorted_list1) and (sorted_list == sorted_list1):
+            good()
+
+        else:
+            print("SCAN AGAIN!")
+            bad()
+            
 
 
 cap.release()

@@ -4,6 +4,8 @@ import os
 from paddleocr import PaddleOCR
 import pygame
 import time
+import pandas as pd
+import csv
 
 
 #=======================================================================================editable section: SIZE
@@ -66,10 +68,13 @@ def label_val(result_text, result, match = None):
             expected_y_top = (m_top * (cx0 - x1)) + y1
             expected_y_bottom = (m_bottom * (cx0 - x2)) + y2
 
-            #buffer = 5
-            trapped_inside = (expected_y_top <= cy3) and (expected_y_bottom >= cy0)
+            buffer = 2
+            
+            # The box is fully swallowed by the beam
+            trapped_inside = (expected_y_top <= (cy3 + buffer)) and (expected_y_bottom >= (cy0 - buffer))
 
-            if (expected_y_top <= cy3 and expected_y_top >= cy0) or (expected_y_bottom >= cy0 and expected_y_bottom <= cy3) or trapped_inside:
+            # Check if top line hits, bottom line hits, OR it's trapped inside
+            if (expected_y_top <= (cy3 + buffer) and expected_y_top >= (cy0 - buffer)) or (expected_y_bottom >= (cy0 - buffer) and expected_y_bottom <= (cy3 + buffer)) or trapped_inside:
                 
                 dist = cx0 - x1
                 if dist < shortest_distance:
@@ -80,6 +85,7 @@ def label_val(result_text, result, match = None):
         return best_match_text
 
 #------------------------------------------------------------------------------------list indexing (6 slots)
+#===============================================================================================================================================================================================================================================================================================================
     #label (all caps, pay attension!!) MAKE SURE THE VALS DONT REPEAT!!!!!!:
 
     box_number = 1 #insert box number!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
@@ -111,11 +117,16 @@ def label_val(result_text, result, match = None):
     "12": "0603",
     "13": "0302"
     }
-    size_code = part_number[7:9]
-    size = MIL_SIZE_MAP.get(size_code, "None")
-    sorted_list.insert(2, size)
+    if (part_number is not None) and (len(part_number) >=9):
+        size_code = part_number[7:9]
+        size = MIL_SIZE_MAP.get(size_code, "None")
+        sorted_list.insert(2, size)
+    else:
+        size = "None"
+        sorted_list.insert(2, size)
+
     #date Code:
-    match = 'CODE'
+    match = 'DATE'
     best_match_text = label_val(result_text, result, match)
     sorted_list.insert(3,best_match_text)
     #Lot Code:
@@ -128,7 +139,8 @@ def label_val(result_text, result, match = None):
     sorted_list.insert(5,best_match_text)
     #box number:
     sorted_list.insert(6,box_number)
-   
+
+#==========================================================================================================================================================================================================================================================================================================================   
 #--------------------------------------------------------------------list indexing (6 slots)      
     return sorted_list
 
@@ -158,8 +170,8 @@ def bad():
 cap = cv2.VideoCapture(0)
 
 #-----------------------------------------------------------OCR initialization
-#cap.set(cv2.CAP_PROP_FRAME_WIDTH, 600)
-#cap.set(cv2.CAP_PROP_FRAME_HEIGHT, 600)
+cap.set(cv2.CAP_PROP_FRAME_WIDTH, 500)
+cap.set(cv2.CAP_PROP_FRAME_HEIGHT, 500)
 
 ocr = PaddleOCR(
     lang='en', 
@@ -178,9 +190,6 @@ while True:
     #cv2.fastNlMeansDenoising(frame)
 
     key = cv2.waitKey(1)
-
-    if key == ord('q'):
-        break
 
     if key == ord(' '):
         cv2.imwrite("label.jpg", frame)
@@ -216,29 +225,29 @@ while True:
         print(sorted_list1)
 
         if (None not in sorted_list) and (None not in sorted_list1) and ("None" not in sorted_list) and ("None" not in sorted_list1) and (sorted_list == sorted_list1):
-            good()
+            
+            csv_file_name = f"Box {sorted_list[6]} Contents.csv"
 
+            with open(csv_file_name, mode='a', newline='') as csvFile:
+                writer = csv.writer(csvFile)
+
+                writer.writerow(sorted_list)
+                
+                good()
+        
         else:
             print("SCAN AGAIN!")
             bad()
+
+
+    if key == ord('q'):
+        header_list = ['Part Number', 'Description', 'Size', 'Date Code', 'Lot Code', 'Quantity', 'Box Number']
+        df = pd.read_csv(csv_file_name, header=None)
+        df.to_csv(csv_file_name, header=header_list, index=False)
+
+        break
+
+
             
-
-
 cap.release()
 cv2.destroyAllWindows()
-
-
-
-
-#---------------------------------------------------------------------------------------------------------------PANDAS experimental testing
-'''responce = "M55342K11B10E0R$RESISTOR_10k_OHMS_1%$0402$0406J$124168$570"
-Box = str("1")
-
-row = responce.split("$")
-
-row.append(Box)
-
-print(row)
-#print(row[6])
-
-'''

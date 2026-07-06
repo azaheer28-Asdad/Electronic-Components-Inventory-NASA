@@ -173,12 +173,8 @@ cap = cv2.VideoCapture(0)
 cap.set(cv2.CAP_PROP_FRAME_WIDTH, 500)
 cap.set(cv2.CAP_PROP_FRAME_HEIGHT, 500)
 
-ocr = PaddleOCR(
-    lang='en', 
-    use_textline_orientation=True, 
-    use_doc_orientation_classify=False,
-    enable_mkldnn=False
-)
+# Update your OCR initialization to include use_gpu=True
+ocr = PaddleOCR(use_textline_orientation=True, lang='en', device="gpu:0")
 
 while True:
     ret, frame = cap.read()
